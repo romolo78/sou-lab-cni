@@ -1,0 +1,29 @@
+- name: Playbook for prometheus
+  become: true
+  hosts: soube2
+  tasks:
+    - name: Create data dir
+      ansible.builtin.file:
+       path: /usr/local/etc/prometheus
+       state: directory
+       mode: '0755'
+
+    - name: Create Prometheus data dir
+      ansible.builtin.file:
+       path: /usr/local/etc/prometheus/data
+       state: directory
+       mode: '0755'
+
+    - name: Copy the haproxy.cfg to mount directory
+      copy:
+       src: /home/vagrant/.ansible/prometheus.yml
+       dest: /usr/local/etc/prometheus/prometheus.yml
+
+    - name: Create Prometheus Container
+      containers.podman.podman_container:
+         name: prometheus
+         image: prom/prometheus
+         user: root
+         volumes:
+             - /usr/local/etc/prometheus/prometheus.yml:/prometheus/prometheus.yml
+             - /usr/local/etc/prometheus/data:/prometheus/data

@@ -1,0 +1,6 @@
+---
+- name: my first project
+  hosts: all
+  become: true
+  roles:
+    - sou_podman

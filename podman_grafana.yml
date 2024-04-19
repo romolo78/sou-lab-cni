@@ -1,0 +1,23 @@
+- name: Playbook for prometheus
+  become: true
+  hosts: soube2
+  tasks:
+    - name: Create data dir
+      ansible.builtin.file:
+       path: /usr/local/etc/grafana
+       state: directory
+       mode: '0755'
+
+
+    - name: Copy the grafana.ini to mount directory
+      copy:
+       src: /home/vagrant/.ansible/grafana.ini
+       dest: /usr/local/etc/grafana/grafana.ini
+
+    - name: Create Prometheus Container
+      containers.podman.podman_container:
+         name: grafana
+         image: docker.io/grafana/grafana:latest
+         user: root
+         volumes:
+             - /usr/local/etc/grafana:/grafana

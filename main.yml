@@ -1,0 +1,97 @@
+---
+- name: PODMAN
+  become: true
+  hosts: all
+  tasks:
+    - name: install podman
+      yum:
+       name: podman
+       state: latest
+
+- name: HAPROXY
+  become: true
+  hosts: soufe1
+  tasks:
+    - name: Create mount directory haproxy
+      file:
+       path: /usr/local/etc/haproxy
+       state: directory
+       mode: '0755'
+
+    - name: Create mount directory certificati
+      file:
+       path: /usr/local/etc/certificati
+       state: directory
+       mode: '0755'
+
+    - name: Copy the haproxy.cfg to mount directory
+      copy:
+       src: /home/vagrant/.ansible/config/haproxy.cfg
+       dest: /usr/local/etc/haproxy/haproxy.cfg
+
+    - name: Copy the certifcato to mount directory
+      copy:
+       src: /home/vagrant/.ansible/certificati/certificato.pem
+       dest: /usr/local/etc/certificati/certificato.pem
+
+    - name: Running httpd image.
+      containers.podman.podman_container:
+         name: haproxytech
+         image: docker.io/haproxy
+         volumes:
+             - /usr/local/etc/haproxy/:/usr/local/etc/haproxy/
+             - /usr/local/etc/certificati:/usr/local/etc/haproxy/certificati
+
+- name: Prometheus
+  become: true
+  hosts: soube2
+  tasks:
+    - name: Create data dir
+      ansible.builtin.file:
+       path: /usr/local/etc/prometheus
+       state: directory
+       mode: '0755'
+
+    - name: Create Prometheus data dir
+      ansible.builtin.file:
+       path: /usr/local/etc/prometheus/data
+       state: directory
+       mode: '0755'
+
+    - name: Copy the prometheus.yml to mount directory
+      copy:
+       src: /home/vagrant/.ansible/config/prometheus.yml
+       dest: /usr/local/etc/prometheus/prometheus.yml
+
+    - name: Create Prometheus Container
+      containers.podman.podman_container:
+         name: prometheus
+         image: prom/prometheus
+         user: root
+         volumes:
+             - /usr/local/etc/prometheus/prometheus.yml:/prometheus/prometheus.yml
+             - /usr/local/etc/prometheus/data:/prometheus/data
+
+- name: GRAFANA
+  become: true
+  hosts: soube2
+  tasks:
+    - name: Create data dir
+      ansible.builtin.file:
+       path: /usr/local/etc/grafana
+       state: directory
+       mode: '0755'
+
+
+    - name: Copy the grafana.ini to mount directory
+      copy:
+       src: /home/vagrant/.ansible/config/grafana.ini
+       dest: /usr/local/etc/grafana/grafana.ini
+
+    - name: Create Grafana Container
+      containers.podman.podman_container:
+         name: grafana
+         image: docker.io/grafana/grafana:latest
+         user: root
+         volumes:
+             - /usr/local/etc/grafana:/grafana
